@@ -18,32 +18,38 @@ const Canva = () => {
   
   const { stickers, addSticker, removeSticker } = useSticker();
   const [scale, setScale] = useState(1);
+  const [isCapturing, setIsCapturing] = useState(false);
 
-  // Logic tính toán Scale thông minh
+  // Kích thước chuẩn của khung ảnh (Pixel)
+  const BASE_WIDTH = frameStyle === 'grid' ? 530 : 380;
+
+  // Logic Auto Scale cho mobile
   useEffect(() => {
     const handleResize = () => {
       const screenWidth = window.innerWidth;
-      
-      // Xác định chiều rộng chuẩn của khung ảnh để tính tỉ lệ
-      // Grid rộng khoảng 530px, Strip rộng khoảng 380px
-      const baseWidth = frameStyle === 'grid' ? 530 : 380;
-
-      if (screenWidth < baseWidth + 40) {
-        // Nếu màn hình nhỏ hơn khung ảnh -> Scale nhỏ lại
-        const fitScale = (screenWidth - 30) / baseWidth; 
+      // Nếu màn hình nhỏ hơn khung ảnh (+40px lề)
+      if (screenWidth < BASE_WIDTH + 40) {
+        const fitScale = (screenWidth - 40) / BASE_WIDTH; 
         setScale(fitScale); 
       } else {
-        // Màn hình to -> Giữ nguyên size thật
         setScale(1);
       }
     };
-
     handleResize(); 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [frameStyle]); // Chạy lại khi đổi kiểu khung
+  }, [frameStyle, BASE_WIDTH]); // Chạy lại khi đổi layout
 
-  const onDownload = () => handleDownloadImage(printRef);
+  // Hàm download "Snap & Restore"
+  const onDownload = async () => {
+    setIsCapturing(true); // 1. Tắt scale (trở về kích thước thật)
+    
+    // Đợi 100ms để trình duyệt vẽ lại xong kích thước thật rồi mới chụp
+    setTimeout(async () => {
+        await handleDownloadImage(printRef);
+        setIsCapturing(false); // 2. Bật lại scale
+    }, 100); 
+  };
 
   return (
     <div className="flex flex-col md:flex-row h-full w-full pt-24 md:pt-32 pb-10 px-4 gap-6 animate-fade-in items-center justify-start md:justify-center overflow-y-auto">
@@ -67,27 +73,34 @@ const Canva = () => {
 
       {/* CANVAS AREA */}
       <div className="flex-1 flex items-center justify-center relative z-10 w-full order-1 md:order-2">
-        {/* Wrapper này chịu trách nhiệm Scale hiển thị */}
-        <div style={{ transform: `scale(${scale})`, transformOrigin: 'top center', transition: 'transform 0.3s' }}>
+        <div 
+            style={{ 
+                transform: isCapturing ? 'none' : `scale(${scale})`, // Tắt scale khi chụp
+                transformOrigin: 'top center', 
+                transition: isCapturing ? 'none' : 'transform 0.3s ease-out'
+            }}
+        >
           
-          {/* 🟢 ARTBOARD CHÍNH THỨC */}
+          {/* 🟢 ARTBOARD CHÍNH */}
           <div 
             ref={printRef}
             className="relative bg-[#FFF0F5] shadow-2xl" 
             style={{
                 padding: '24px',
                 
-                // 👇 QUAN TRỌNG NHẤT: Ép cứng chiều rộng tối thiểu (min-width)
-                // Để trên điện thoại nó không bị bóp méo (squashed)
-                // Nó sẽ tràn ra ngoài màn hình (nhưng ta đã scale nhỏ lại để nhìn thấy hết)
-                minWidth: frameStyle === 'grid' ? '530px' : '380px',
-                width: 'max-content',
+                // 👇 CỐ ĐỊNH CHIỀU RỘNG TUYỆT ĐỐI (KHUÔN BÊ TÔNG)
+                width: `${BASE_WIDTH}px`, 
+                minWidth: `${BASE_WIDTH}px`, // Cấm co nhỏ hơn số này
+                
+                // 👇 CẤM FLEXBOX BÓP MÉO
+                flexShrink: 0, 
                 
                 display: 'block',
-                margin: '0 auto'
+                margin: '0 auto',
+                boxSizing: 'border-box'
             }}
           >
-            {/* LỚP 1: LAYOUT (Không z-index) */}
+            {/* 1. LAYOUT WRAPPER (Không z-index) */}
             <div className="relative pointer-events-none">
                 {frameStyle === 'strip' ? (
                     <div className="flex gap-4 md:gap-6">
@@ -99,14 +112,15 @@ const Canva = () => {
                 )}
             </div>
 
-            {/* LỚP 2: STICKER (Không z-index) */}
+            {/* 2. STICKER WRAPPER (Không z-index) */}
             <div className="absolute inset-0 pointer-events-none">
                 {stickers.map((sticker) => (
                   <StickerItem 
                       key={sticker.id} 
                       sticker={sticker} 
                       onRemove={removeSticker} 
-                      scale={scale}
+                      // Khi đang chụp thì scale=1 để vị trí sticker chuẩn xác
+                      scale={isCapturing ? 1 : scale}
                   />
                 ))}
             </div>
@@ -119,10 +133,10 @@ const Canva = () => {
 
       {/* BUTTONS */}
       <div className="w-full md:w-auto flex flex-row md:flex-col gap-4 justify-center items-center z-50 mt-4 md:mt-0 order-3">
-         <Button variant="primary" className="w-full md:w-48" onClick={onDownload}>
-           Download
+         <Button variant="primary" className="w-full md:w-48" onClick={onDownload} disabled={isCapturing}>
+           {isCapturing ? 'Processing...' : 'Download'}
          </Button>
-         <Button variant="secondary" className="w-full md:w-48" onClick={resetAll}>
+         <Button variant="secondary" className="w-full md:w-48" onClick={resetAll} disabled={isCapturing}>
            Home
          </Button>
       </div>
