@@ -30,8 +30,14 @@ const Upload = () => {
 
   const handleContinue = () => {
     if (uploadedImages.length === 4) {
-      const finalPhotos = uploadedImages.map(img => img.preview);
-      setPhotosToStore(finalPhotos);
+      // 👇 QUAN TRỌNG: Tạo danh sách object ảnh với source là 'upload'
+      const finalPhotosObjects = uploadedImages.map((img, index) => ({
+          id: Date.now() + index,
+          src: img.preview,
+          source: 'upload' 
+      }));
+
+      setPhotosToStore(finalPhotosObjects);
       setTimeout(() => setStep('frame'), 300);
     }
   };

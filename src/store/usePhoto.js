@@ -2,19 +2,23 @@ import { create } from 'zustand';
 
 const usePhotoStore = create((set) => ({
   step: 'home',
-  photos: [], // Mảng chứa ảnh (tạm thời để rỗng cũng được)
-  frameStyle: 'strip', // 👇 THÊM DÒNG NÀY (Mặc định là strip)
+  photos: [], // Mảng chứa các object: { id, src, source }
+  frameStyle: 'strip',
 
   setStep: (step) => set({ step }),
 
-  // Hàm thêm ảnh giả (chỉ cần tăng số lượng là được)
-  addPhoto: (photo) => set((state) => ({ 
-    photos: [...state.photos, photo] 
+  // Thêm ảnh mới (Dùng cho Camera)
+  addPhoto: (imgSrc, source = 'camera') => set((state) => ({ 
+    photos: [...state.photos, { 
+        id: Date.now() + Math.random(), 
+        src: imgSrc, 
+        source: source // 'camera' hoặc 'upload'
+    }] 
   })),
 
-  // 👇 THÊM HÀM MỚI NÀY (Dùng cho Upload - Lưu 1 lúc 4 ảnh)
-  setPhotos: (newPhotosArray) => set({ photos: newPhotosArray }),
-    // 👇 THÊM HÀM NÀY
+  // Set toàn bộ danh sách ảnh (Dùng cho Upload)
+  setPhotos: (newPhotosArrayOfObjects) => set({ photos: newPhotosArrayOfObjects }),
+
   setFrameStyle: (style) => set({ frameStyle: style }),
 
   resetAll: () => set({ step: 'home', photos: [], frameStyle: 'strip' }),

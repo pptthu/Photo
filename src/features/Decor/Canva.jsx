@@ -20,10 +20,19 @@ const Canva = () => {
   const { stickers, addSticker, removeSticker } = useSticker();
   const [scale, setScale] = useState(1);
 
-  // Auto scale
+  // 👇 LOGIC SCALE MỚI: Tự động tính toán cực chuẩn cho mọi màn hình
   useEffect(() => {
     const handleResize = () => {
-      setScale(window.innerWidth < 768 ? 0.8 : 1);
+      const screenWidth = window.innerWidth;
+      // Nếu màn hình nhỏ hơn 600px (Mobile)
+      if (screenWidth < 600) {
+        // Tính toán tỷ lệ để khung ảnh (khoảng 500px) luôn vừa khít màn hình
+        // Trừ đi 40px lề cho đẹp
+        const fitScale = (screenWidth - 40) / 500; 
+        setScale(fitScale); 
+      } else {
+        setScale(1); // Màn hình to thì giữ nguyên
+      }
     };
     handleResize(); 
     window.addEventListener('resize', handleResize);
@@ -62,16 +71,13 @@ const Canva = () => {
             className="relative bg-[#FFF0F5] shadow-2xl" 
             style={{
                 padding: '24px', 
-                width: 'max-content',
-                maxWidth: '100vw', 
+                width: 'max-content', // 👈 QUAN TRỌNG: Để nó tự bung theo nội dung
+                // ❌ ĐÃ XÓA DÒNG: maxWidth: '100vw' (Thủ phạm gây cắt ảnh)
                 display: 'block',
                 margin: '0 auto'
             }}
           >
-            {/* 1. LAYOUT WRAPPER 
-                - QUAN TRỌNG: Không set z-index ở đây!
-                - Để Logo (z-50 bên trong) có thể đè lên Sticker (z-30 bên ngoài).
-            */}
+            {/* 1. LAYOUT WRAPPER (Không z-index) */}
             <div className="relative pointer-events-none">
                 {frameStyle === 'strip' ? (
                     <div className="flex gap-4 md:gap-6">
@@ -83,9 +89,7 @@ const Canva = () => {
                 )}
             </div>
 
-            {/* 2. STICKER WRAPPER 
-                - QUAN TRỌNG: Không set z-index ở đây!
-            */}
+            {/* 2. STICKER WRAPPER (Không z-index) */}
             <div className="absolute inset-0 pointer-events-none">
                 {stickers.map((sticker) => (
                   <StickerItem 
