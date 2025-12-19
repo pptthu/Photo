@@ -4,7 +4,6 @@ import usePhotoStore from '../../store/usePhoto.js';
 const Frame = () => {
   const setStep = usePhotoStore((state) => state.setStep);
   const setFrameStyle = usePhotoStore((state) => state.setFrameStyle);
-  // 👇 1. Lấy thêm hàm này để reset ảnh
   const setPhotos = usePhotoStore((state) => state.setPhotos);
 
   const handleSelectFrame = (style) => {
@@ -12,16 +11,15 @@ const Frame = () => {
     setTimeout(() => setStep('decor'), 200);
   };
 
-  // 👇 2. Tạo hàm xử lý mới cho nút Retake
   const handleRetake = () => {
-    // BƯỚC 1: Xóa sạch mảng ảnh hiện tại để bắt đầu lại
     setPhotos([]); 
-    // BƯỚC 2: Quay về màn hình chọn chế độ (Mode) - nơi có 2 nút Take/Upload
     setStep('mode');
   };
 
   return (
-    <div className="flex flex-col items-center justify-start h-full w-full pt-32 pb-10 px-4 animate-fade-in">
+    // SỬA: Đổi h-full -> min-h-full (Để nội dung có thể dài hơn màn hình mà không bị cắt)
+    // Thêm pb-20 để lỡ cuộn xuống dưới cùng thì nút không bị sát mép quá
+    <div className="flex flex-col items-center justify-start min-h-full w-full pt-32 pb-20 px-4 animate-fade-in">
       
       <h2 
         className="text-5xl md:text-6xl font-bold mb-12 font-hand text-center"
@@ -79,9 +77,8 @@ const Frame = () => {
 
       </div>
 
-      {/* 👇 3. Cập nhật nút Retake Photos */}
       <button 
-        onClick={handleRetake} // <-- Dùng hàm mới ở đây
+        onClick={handleRetake}
         className="mt-12 mb-8 text-white/80 hover:text-white underline underline-offset-4 font-bold text-lg drop-shadow-md z-50"
       >
         ← Back to Menu

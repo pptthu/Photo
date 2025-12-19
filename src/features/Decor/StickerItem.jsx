@@ -1,29 +1,28 @@
 import React, { useRef } from 'react';
 import Draggable from 'react-draggable';
 
-const StickerItem = ({ sticker, onRemove }) => {
-  // Tạo ref riêng cho mỗi sticker để tránh lỗi crash của thư viện
+const StickerItem = ({ sticker, onRemove, scale = 1 }) => {
   const nodeRef = useRef(null);
 
   return (
-    <Draggable nodeRef={nodeRef} bounds="parent">
+    // bounds="parent": Giữ sticker nằm trong khung hồng (Artboard)
+    <Draggable nodeRef={nodeRef} bounds="parent" scale={scale}>
       <div 
         ref={nodeRef} 
-        className="absolute inline-block w-24 h-24 cursor-move pointer-events-auto group touch-none"
-        style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }} // Căn giữa lúc mới hiện
+        // 👇 z-[30]: Cao hơn Ảnh (10) nhưng Thấp hơn Logo (50)
+        className="absolute inline-block w-24 h-24 cursor-move pointer-events-auto group touch-none z-[30]"
       >
          <img 
             src={sticker.src} 
             alt="decor" 
-            className="w-full h-full object-contain drop-shadow-md select-none pointer-events-none" 
-            // select-none và pointer-events-none giúp kéo thả mượt hơn
+            className="w-full h-full drop-shadow-md select-none pointer-events-none" 
+            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
          />
          
-         {/* Nút xóa (chỉ hiện khi hover hoặc chạm vào) */}
          <div 
-            className="delete-btn absolute -top-3 -right-3 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center cursor-pointer shadow-md opacity-0 group-hover:opacity-100 transition-opacity font-bold z-50"
+            className="delete-btn absolute -top-3 -right-3 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center cursor-pointer shadow-md opacity-0 group-hover:opacity-100 transition-opacity font-bold z-[60]"
             onClick={(e) => {
-                e.stopPropagation(); // Chặn sự kiện kéo
+                e.stopPropagation();
                 onRemove(sticker.id);
             }}
             onTouchEnd={(e) => {

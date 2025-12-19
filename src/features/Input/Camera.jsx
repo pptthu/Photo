@@ -1,95 +1,98 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useRef, useState } from 'react';
 import Webcam from 'react-webcam';
-import usePhotoStore from '../../store/usePhoto.js';
+import usePhotoStore from '../../store/usePhoto';
+import useCountdown from '../../hooks/useCountdown';
+import { CONFIG } from '../../utils/constants';
+import Button from '../../components/Button'; // Import Button xịn
 
 const Camera = () => {
-  const setStep = usePhotoStore((state) => state.setStep);
-  const addPhoto = usePhotoStore((state) => state.addPhoto);
-  
+  const { setStep, addPhoto } = usePhotoStore();
   const webcamRef = useRef(null);
-  const [photosTaken, setPhotosTaken] = useState(0); 
-  const [countdown, setCountdown] = useState(null); 
+  const [photosTaken, setPhotosTaken] = useState(0);
+  
+  // State quản lý hiệu ứng Flash
   const [isFlashing, setIsFlashing] = useState(false);
 
-  const startCapture = useCallback(() => {
-    if (countdown !== null) return;
-    setCountdown(5);
-    setTimeout(() => {
-      setCountdown(2);
-      setTimeout(() => {
-        setCountdown(1);
-        setTimeout(() => { captureImage(); }, 1000);
-      }, 1000);
-    }, 1000);
-  }, [countdown]);
-
-  const captureImage = () => {
+  // Logic chụp ảnh & Flash
+  const handleCapture = () => {
+    // 1. Kích hoạt Flash
     setIsFlashing(true);
+    
+    // 2. Tắt Flash sau 150ms (Tạo hiệu ứng chớp nhanh)
     setTimeout(() => setIsFlashing(false), 150);
+
+    // 3. Chụp ảnh từ Webcam
     const imageSrc = webcamRef.current.getScreenshot();
     addPhoto(imageSrc);
-    setCountdown(null);
-    setPhotosTaken(prev => {
+    
+    // 4. Kiểm tra số lượng ảnh
+    setPhotosTaken((prev) => {
       const newCount = prev + 1;
-      if (newCount >= 4) { setTimeout(() => setStep('frame'), 800); }
+      if (newCount >= CONFIG.MAX_PHOTOS) {
+        setTimeout(() => setStep('frame'), 800);
+      }
       return newCount;
     });
   };
 
+  // Sử dụng hook đếm ngược
+  const { count, startCountdown, isCounting } = useCountdown(3, handleCapture);
+
   return (
-    // Container chính: Căn giữa, giảm padding trên xuống (pt-24)
     <div className="flex flex-col items-center justify-center h-full w-full pt-24 pb-4 px-4 animate-fade-in relative overflow-hidden">
       
-      {/* Hiệu ứng Flash */}
-      {isFlashing && <div className="absolute inset-0 bg-white z-[60]"></div>}
+      {/* --- HIỆU ỨNG FLASH --- 
+          Lớp phủ màu trắng toàn màn hình, chỉ hiện khi isFlashing = true
+      */}
+      {isFlashing && (
+        <div className="fixed inset-0 z-[999] bg-white animate-fade-out pointer-events-none"></div>
+      )}
 
-      {/* --- PHẦN 1: SỐ ĐẾM (Nằm trên đầu) --- */}
+      {/* SỐ ĐẾM / TIẾN ĐỘ */}
       <div className="mb-4 z-20">
         <div className="bg-white border-2 border-brand-pink px-6 py-1 rounded-full shadow-md min-w-[80px] text-center">
            <span className="text-2xl font-bold text-brand-darkPink font-sans">
-             {countdown !== null ? countdown : `${photosTaken}/4`}
+             {isCounting ? count : `${photosTaken}/${CONFIG.MAX_PHOTOS}`}
            </span>
         </div>
       </div>
 
-      {/* --- PHẦN 2: KHUNG WEBCAM (Đã thu nhỏ lại) --- */}
-      {/* - max-w-xl: Giới hạn chiều rộng tối đa khoảng 570px (vừa vặn, không quá to)
-         - aspect-[4/3]: Giữ tỉ lệ ngang
-         - w-full: Co giãn linh hoạt trên mobile
-      */}
+      {/* KHUNG WEBCAM */}
       <div className="bg-white/30 backdrop-blur-sm p-3 rounded-[1.5rem] border border-white/50 shadow-xl mb-6 w-full max-w-xl">
         <div className="bg-brand-pink p-2 rounded-xl shadow-inner">
            <div className="w-full aspect-[4/3] bg-black border-4 border-white rounded-lg overflow-hidden relative">
               <Webcam
                 ref={webcamRef}
-                audio={false}
+                audio={false} // Tắt tiếng mặc định của trình duyệt để tự xử lý (nếu cần)
                 screenshotFormat="image/jpeg"
                 className="w-full h-full object-cover transform scale-x-[-1]" 
+                videoConstraints={{
+                  facingMode: "user" // "user" là cam trước, "environment" là cam sau
+                }}
               />
            </div>
         </div>
       </div>
 
-      {/* --- PHẦN 3: NÚT BẤM (Sẽ luôn hiện rõ) --- */}
+      {/* NÚT BẤM (Dùng Component Button mới) */}
       <div className="flex items-center gap-6 z-20 pb-4">
-        
-        {/* Nút X (Nhỏ) */}
+        {/* Nút X (Tròn nhỏ -> Tự style riêng hoặc dùng Button với class đè) */}
         <button 
           onClick={() => setStep('mode')}
-          className="w-10 h-10 rounded-full bg-white/80 text-gray-500 font-bold text-lg shadow-lg hover:bg-white flex items-center justify-center transition-colors"
+          className="w-12 h-12 rounded-full bg-white/80 text-gray-500 font-bold text-lg shadow-lg hover:bg-white flex items-center justify-center transition-colors"
         >
           ✕
         </button>
 
-        {/* Nút Capture (To vừa phải) */}
-        <button 
-          onClick={startCapture}
-          disabled={countdown !== null}
-          className="bg-white text-brand-darkPink border-2 border-brand-pink px-10 py-2 rounded-full text-xl font-bold shadow-[0_4px_0_rgb(244,143,177)] hover:translate-y-1 hover:shadow-none active:scale-95 transition-all min-w-[160px]"
+        {/* Nút Chụp */}
+        <Button 
+          variant="danger" 
+          onClick={startCountdown} 
+          disabled={isCounting}
+          className="min-w-[160px]"
         >
-          Capture
-        </button>
-
+          {isCounting ? 'Smile!' : 'Capture'}
+        </Button>
       </div>
 
     </div>
