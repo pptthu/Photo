@@ -1,5 +1,4 @@
 import React, { useRef, useState, useEffect } from 'react';
-import html2canvas from 'html2canvas';
 import usePhotoStore from '../../store/usePhoto';
 
 // Hooks & Utils
@@ -19,19 +18,18 @@ const Canva = () => {
   
   const { stickers, addSticker, removeSticker } = useSticker();
   const [scale, setScale] = useState(1);
+  // 👇 THÊM STATE MỚI: Để theo dõi trạng thái đang chụp ảnh
+  const [isCapturing, setIsCapturing] = useState(false);
 
-  // 👇 LOGIC SCALE MỚI: Tự động tính toán cực chuẩn cho mọi màn hình
+  // Auto scale cho mobile (Giữ nguyên)
   useEffect(() => {
     const handleResize = () => {
       const screenWidth = window.innerWidth;
-      // Nếu màn hình nhỏ hơn 600px (Mobile)
       if (screenWidth < 600) {
-        // Tính toán tỷ lệ để khung ảnh (khoảng 500px) luôn vừa khít màn hình
-        // Trừ đi 40px lề cho đẹp
-        const fitScale = (screenWidth - 40) / 500; 
-        setScale(fitScale); 
+        const fitScale = (screenWidth - 40) / 480; // Tính toán tỉ lệ dựa trên chiều rộng chuẩn của khung (ví dụ 480px)
+        setScale(Math.min(fitScale, 1)); // Không bao giờ scale lớn hơn 1
       } else {
-        setScale(1); // Màn hình to thì giữ nguyên
+        setScale(1);
       }
     };
     handleResize(); 
@@ -39,12 +37,25 @@ const Canva = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const onDownload = () => handleDownloadImage(printRef);
+  // 👇 SỬA HÀM DOWNLOAD: Áp dụng thủ thuật "Snap & Restore"
+  const onDownload = async () => {
+    // 1. Bắt đầu chụp: Tắt scale
+    setIsCapturing(true);
+
+    // Dùng setTimeout 0ms để đẩy việc chụp xuống cuối hàng đợi sự kiện,
+    // đảm bảo React đã kịp render lại giao diện với scale(1) trước khi chụp.
+    setTimeout(async () => {
+        // 2. Thực hiện chụp
+        await handleDownloadImage(printRef);
+        // 3. Chụp xong: Bật lại scale bình thường
+        setIsCapturing(false);
+    }, 50); // Để 50ms cho chắc chắn trên các thiết bị yếu
+  };
 
   return (
     <div className="flex flex-col md:flex-row h-full w-full pt-24 md:pt-32 pb-10 px-4 gap-6 animate-fade-in items-center justify-start md:justify-center overflow-y-auto">
       
-      {/* MENU STICKER */}
+      {/* MENU STICKER (Giữ nguyên) */}
       <div className="w-full md:w-64 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 p-4 flex flex-col shadow-xl z-20 flex-shrink-0 order-2 md:order-1">
         <h3 className="text-brand-darkPink font-bold text-xl mb-2 text-center">Stickers</h3>
         <div className="grid grid-cols-4 md:grid-cols-2 gap-3 p-1 max-h-40 md:max-h-[60vh] overflow-y-auto custom-scrollbar">
@@ -62,22 +73,31 @@ const Canva = () => {
       </div>
 
       {/* CANVAS AREA */}
-      <div className="flex-1 flex items-center justify-center relative z-10 w-full order-1 md:order-2">
-        <div style={{ transform: `scale(${scale})`, transformOrigin: 'top center', transition: 'transform 0.3s' }}>
+      <div className="flex-1 flex items-center justify-center relative z-10 w-full order-1 md:order-2 min-h-[60vh]">
+        {/* 👇 ÁP DỤNG LOGIC SCALE Ở ĐÂY */}
+        <div 
+            style={{ 
+                // Nếu đang chụp (isCapturing = true) thì scale về 1, ngược lại thì dùng scale tính toán
+                transform: isCapturing ? 'scale(1)' : `scale(${scale})`, 
+                transformOrigin: 'top center', 
+                // Tắt hiệu ứng chuyển động khi chụp để tránh bị mờ
+                transition: isCapturing ? 'none' : 'transform 0.3s ease-out'
+            }}
+        >
           
-          {/* 🟢 ARTBOARD */}
+          {/* 🟢 ARTBOARD (Giữ nguyên cấu trúc chuẩn) */}
           <div 
             ref={printRef}
             className="relative bg-[#FFF0F5] shadow-2xl" 
             style={{
                 padding: '24px', 
-                width: 'max-content', // 👈 QUAN TRỌNG: Để nó tự bung theo nội dung
-                // ❌ ĐÃ XÓA DÒNG: maxWidth: '100vw' (Thủ phạm gây cắt ảnh)
+                width: 'max-content', // Quan trọng: Để khung tự mở rộng theo nội dung thật
                 display: 'block',
-                margin: '0 auto'
+                margin: '0 auto',
+                boxSizing: 'border-box'
             }}
           >
-            {/* 1. LAYOUT WRAPPER (Không z-index) */}
+            {/* 1. LAYOUT WRAPPER (Ảnh z-10, Logo z-50) */}
             <div className="relative pointer-events-none">
                 {frameStyle === 'strip' ? (
                     <div className="flex gap-4 md:gap-6">
@@ -89,14 +109,15 @@ const Canva = () => {
                 )}
             </div>
 
-            {/* 2. STICKER WRAPPER (Không z-index) */}
+            {/* 2. STICKER WRAPPER (Sticker z-30) */}
             <div className="absolute inset-0 pointer-events-none">
                 {stickers.map((sticker) => (
                   <StickerItem 
                       key={sticker.id} 
                       sticker={sticker} 
                       onRemove={removeSticker} 
-                      scale={scale}
+                      // Truyền scale vào để react-draggable tính toán tốc độ di chuyển chuẩn trên mobile
+                      scale={isCapturing ? 1 : scale}
                   />
                 ))}
             </div>
@@ -109,10 +130,11 @@ const Canva = () => {
 
       {/* BUTTONS */}
       <div className="w-full md:w-auto flex flex-row md:flex-col gap-4 justify-center items-center z-50 mt-4 md:mt-0 order-3">
-         <Button variant="primary" className="w-full md:w-48" onClick={onDownload}>
-           Download
+         {/* Thêm loading state cho nút khi đang chụp */}
+         <Button variant="primary" className="w-full md:w-48" onClick={onDownload} disabled={isCapturing}>
+           {isCapturing ? 'Processing...' : 'Download'}
          </Button>
-         <Button variant="secondary" className="w-full md:w-48" onClick={resetAll}>
+         <Button variant="secondary" className="w-full md:w-48" onClick={resetAll} disabled={isCapturing}>
            Home
          </Button>
       </div>
