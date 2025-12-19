@@ -1,5 +1,4 @@
 import React, { useRef, useState, useEffect } from 'react';
-import html2canvas from 'html2canvas';
 import usePhotoStore from '../../store/usePhoto';
 
 // Hooks & Utils
@@ -20,24 +19,29 @@ const Canva = () => {
   const { stickers, addSticker, removeSticker } = useSticker();
   const [scale, setScale] = useState(1);
 
-  // 👇 LOGIC SCALE MỚI: Tự động tính toán cực chuẩn cho mọi màn hình
+  // Logic tính toán Scale thông minh
   useEffect(() => {
     const handleResize = () => {
       const screenWidth = window.innerWidth;
-      // Nếu màn hình nhỏ hơn 600px (Mobile)
-      if (screenWidth < 600) {
-        // Tính toán tỷ lệ để khung ảnh (khoảng 500px) luôn vừa khít màn hình
-        // Trừ đi 40px lề cho đẹp
-        const fitScale = (screenWidth - 40) / 500; 
+      
+      // Xác định chiều rộng chuẩn của khung ảnh để tính tỉ lệ
+      // Grid rộng khoảng 530px, Strip rộng khoảng 380px
+      const baseWidth = frameStyle === 'grid' ? 530 : 380;
+
+      if (screenWidth < baseWidth + 40) {
+        // Nếu màn hình nhỏ hơn khung ảnh -> Scale nhỏ lại
+        const fitScale = (screenWidth - 30) / baseWidth; 
         setScale(fitScale); 
       } else {
-        setScale(1); // Màn hình to thì giữ nguyên
+        // Màn hình to -> Giữ nguyên size thật
+        setScale(1);
       }
     };
+
     handleResize(); 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [frameStyle]); // Chạy lại khi đổi kiểu khung
 
   const onDownload = () => handleDownloadImage(printRef);
 
@@ -63,21 +67,27 @@ const Canva = () => {
 
       {/* CANVAS AREA */}
       <div className="flex-1 flex items-center justify-center relative z-10 w-full order-1 md:order-2">
+        {/* Wrapper này chịu trách nhiệm Scale hiển thị */}
         <div style={{ transform: `scale(${scale})`, transformOrigin: 'top center', transition: 'transform 0.3s' }}>
           
-          {/* 🟢 ARTBOARD */}
+          {/* 🟢 ARTBOARD CHÍNH THỨC */}
           <div 
             ref={printRef}
             className="relative bg-[#FFF0F5] shadow-2xl" 
             style={{
-                padding: '24px', 
-                width: 'max-content', // 👈 QUAN TRỌNG: Để nó tự bung theo nội dung
-                // ❌ ĐÃ XÓA DÒNG: maxWidth: '100vw' (Thủ phạm gây cắt ảnh)
+                padding: '24px',
+                
+                // 👇 QUAN TRỌNG NHẤT: Ép cứng chiều rộng tối thiểu (min-width)
+                // Để trên điện thoại nó không bị bóp méo (squashed)
+                // Nó sẽ tràn ra ngoài màn hình (nhưng ta đã scale nhỏ lại để nhìn thấy hết)
+                minWidth: frameStyle === 'grid' ? '530px' : '380px',
+                width: 'max-content',
+                
                 display: 'block',
                 margin: '0 auto'
             }}
           >
-            {/* 1. LAYOUT WRAPPER (Không z-index) */}
+            {/* LỚP 1: LAYOUT (Không z-index) */}
             <div className="relative pointer-events-none">
                 {frameStyle === 'strip' ? (
                     <div className="flex gap-4 md:gap-6">
@@ -89,7 +99,7 @@ const Canva = () => {
                 )}
             </div>
 
-            {/* 2. STICKER WRAPPER (Không z-index) */}
+            {/* LỚP 2: STICKER (Không z-index) */}
             <div className="absolute inset-0 pointer-events-none">
                 {stickers.map((sticker) => (
                   <StickerItem 
