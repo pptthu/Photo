@@ -17,7 +17,6 @@ const Camera = () => {
 
     const imageSrc = webcamRef.current.getScreenshot();
     
-    // 👇 QUAN TRỌNG: Đánh dấu ảnh này là từ 'camera'
     addPhoto(imageSrc, 'camera');
     
     setPhotosTaken((prev) => {

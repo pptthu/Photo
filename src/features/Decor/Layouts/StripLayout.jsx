@@ -19,9 +19,12 @@ const StripLayout = ({ photos }) => {
             className="w-full h-full object-cover grayscale-[10%]"
             alt="strip"
             style={{ 
-                objectFit: 'cover', width: '100%', height: '100%', display: 'block',
-                // Lật ảnh vì là Camera
-                transform: 'scaleX(-1)' 
+                objectFit: 'cover', 
+                width: '100%', 
+                height: '100%', 
+                display: 'block',
+                // Lật ảnh 
+                transform: photoObj.source === 'camera' ? 'scaleX(-1)' : 'none' 
             }}
           />
         </div>

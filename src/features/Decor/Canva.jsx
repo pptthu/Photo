@@ -1,16 +1,10 @@
 import React, { useRef, useState, useEffect } from 'react';
 import usePhotoStore from '../../store/usePhoto';
-
-// Hooks & Utils
 import useSticker from '../../hooks/useSticker'; 
-// 👇 Import hàm mới
 import { handleDownloadImageCloned } from '../../utils/canvaHelper';
 import { STICKERS } from '../../utils/constants';
-
-// Components
 import StickerItem from './StickerItem';
 import StripLayout from './Layouts/StripLayout';
-
 import Button from '../../components/Button';
 
 const Canva = () => {
@@ -20,16 +14,14 @@ const Canva = () => {
   const { stickers, addSticker, removeSticker } = useSticker();
   const [scale, setScale] = useState(1);
   
-  // ❌ ĐÃ XÓA: const [isCapturing, setIsCapturing]... (Không cần thiết nữa)
 
-  // Kích thước chuẩn: Strip = 380, Grid = 530
+  // kích thước : nếu grid thì 530, else strip 400 ( grid phát triển sau nếu còn sức khỏe)
   const BASE_WIDTH = frameStyle === 'grid' ? 530 : 400;
 
   // Logic Auto Scale cho mobile
   useEffect(() => {
     const handleResize = () => {
       const screenWidth = window.innerWidth;
-      // Cộng thêm 40px lề
       if (screenWidth < BASE_WIDTH + 40) {
         const fitScale = (screenWidth - 40) / BASE_WIDTH; 
         setScale(fitScale); 
@@ -42,9 +34,9 @@ const Canva = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, [frameStyle, BASE_WIDTH]);
 
-  // 👇 HÀM DOWNLOAD MỚI: Gọn nhẹ hơn nhiều
+  // hàm tải về 
   const onDownload = () => {
-      // Truyền BASE_WIDTH để hàm helper biết cần ép clone về size nào
+      // truyển base width để hàm helper ép clone về size của base width
       handleDownloadImageCloned(printRef, BASE_WIDTH);
   };
 
@@ -71,7 +63,6 @@ const Canva = () => {
       {/* CANVAS AREA */}
       <div className="flex-1 flex items-center justify-center relative z-10 w-full order-1 md:order-2">
         <div 
-           // 👇 Chỉ dùng scale để hiển thị, không cần tắt/bật gì cả
             style={{ 
                 transform: `scale(${scale})`, 
                 transformOrigin: 'top center', 
@@ -79,13 +70,12 @@ const Canva = () => {
             }}
         >
           
-          {/* 🟢 ARTBOARD CHÍNH */}
+          {/* ARTBOARD CHÍNH */}
           <div 
             ref={printRef}
             className="relative bg-[#FFF0F5] shadow-2xl" 
             style={{
                 padding: '24px',
-                // 👇 QUAN TRỌNG: Ép cứng chiều rộng để clone nhận diện đúng
                 width: `${BASE_WIDTH}px`, 
                 display: 'block',
                 margin: '0 auto',
@@ -111,7 +101,6 @@ const Canva = () => {
                       key={sticker.id} 
                       sticker={sticker} 
                       onRemove={removeSticker} 
-                      // Luôn để scale 1 vì chúng ta không tắt scale nữa
                       scale={1}
                   />
                 ))}

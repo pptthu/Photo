@@ -19,10 +19,10 @@ function App() {
       {/* Menu */}
       {step === 'mode' && <Mode />}
       
-      {/* Input: Chỉ còn Camera */}
+      {/* Input: Camera */}
       {step === 'input' && <Camera />}
       
-      {/* Các bước sau */}
+      {/* */}
       {step === 'frame' && <Frame />}
       {step === 'decor' && <Canva />}
     </Layout>

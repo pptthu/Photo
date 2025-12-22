@@ -32,10 +32,7 @@ const Frame = () => {
             </div>
             <span className="bg-white text-brand-darkPink px-6 py-2 rounded-full font-bold shadow-md border-2 border-brand-pink group-hover:bg-brand-pink group-hover:text-white transition-colors">Photo Strip</span>
         </div>
-
-        {/* GRID (Đã ẩn - code vẫn còn đây để sau này dùng) */}
       </div>
-
       <button onClick={handleRetake} className="mt-12 mb-8 text-white/80 hover:text-white underline underline-offset-4 font-bold text-lg drop-shadow-md z-50">← Back to Menu</button>
     </div>
   );

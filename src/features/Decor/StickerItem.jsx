@@ -5,11 +5,9 @@ const StickerItem = ({ sticker, onRemove, scale = 1 }) => {
   const nodeRef = useRef(null);
 
   return (
-    // bounds="parent": Giữ sticker nằm trong khung hồng (Artboard)
     <Draggable nodeRef={nodeRef} bounds="parent" scale={scale}>
       <div 
         ref={nodeRef} 
-        // 👇 z-[30]: Cao hơn Ảnh (10) nhưng Thấp hơn Logo (50)
         className="absolute inline-block w-24 h-24 cursor-move pointer-events-auto group touch-none z-[30]"
       >
          <img 

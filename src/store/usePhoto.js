@@ -7,7 +7,7 @@ const usePhotoStore = create((set) => ({
 
   setStep: (step) => set({ step }),
 
-  // Thêm ảnh mới (Dùng cho Camera)
+  // Thêm ảnh 
   addPhoto: (imgSrc, source = 'camera') => set((state) => ({ 
     photos: [...state.photos, { 
         id: Date.now() + Math.random(), 

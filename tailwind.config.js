@@ -6,7 +6,7 @@ export default {
   ],
   theme: {
     extend: {
-      // 1. BẢNG MÀU
+      //  BẢNG MÀU
       colors: {
         brand: {
           pink: '#FFB7C5',      
@@ -19,21 +19,20 @@ export default {
         }
       },
       
-      // 2. FONT CHỮ
+      //  FONT CHỮ
       fontFamily: {
         hand: ['"Patrick Hand"', 'cursive'], 
         sans: ['"Nunito"', 'sans-serif'],
       },
 
-      // 3. KÍCH THƯỚC (SPACING / WIDTH / HEIGHT)
+      //  KÍCH THƯỚC (SPACING / WIDTH / HEIGHT)
       spacing: {
         'safe-top': '8rem',     // pt-32
       },
       
-      // 👇 ĐÃ GỘP TẤT CẢ WIDTH VÀO ĐÂY
       width: {
         'booth-card': '340px',  // Khung thẻ ở Home
-        'strip': '160px',       // Dải ảnh (cho StripLayout)
+        'strip': '160px',       // Dải ảnh 
       },
 
       height: {

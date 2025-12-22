@@ -15,5 +15,5 @@ export const STICKERS = [
 
 export const CONFIG = {
   MAX_PHOTOS: 4,
-  COUNTDOWN_SECONDS: 3, // Dễ dàng sửa thời gian đếm ngược tại đây
+  COUNTDOWN_SECONDS: 3, 
 };
