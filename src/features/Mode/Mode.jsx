@@ -11,20 +11,18 @@ const Mode = () => {
         className="text-6xl md:text-7xl mb-12 font-bold"
         style={{
             fontFamily: '"Nunito", sans-serif',
-            color: '#F48FB1',
-            WebkitTextStroke: '1.5px #C2185B',
-            textShadow: '0px 2px 0px #FFFFFF'
+            color: '#FFB7C5', // Dùng màu hồng phấn từ theme
+            WebkitTextStroke: '2px #FFFFFF', // Viền trắng
+            textShadow: '0px 3px 6px rgba(244, 143, 177, 0.4)'
         }}
       >
         Hanakaze
       </h1>
       
       <div className="flex flex-col gap-6">
+        {/* Chỉ còn 1 nút để bắt đầu chụp */}
         <Button variant="danger" className="w-64" onClick={() => setStep('input')}>
           Take photos
-        </Button>
-        <Button variant="danger" className="w-64" onClick={() => setStep('upload')}>
-          Upload photos
         </Button>
       </div>
     </div>
